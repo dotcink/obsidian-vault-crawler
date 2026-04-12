@@ -1,0 +1,11 @@
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+
+# Local Obsidian workspace state
+.obsidian/workspace.json
+
+# Imported raw crawl cache
+url-to-markdown/**/.raw/
