@@ -11,7 +11,7 @@
 - `scripts/fetch_evergreen_notes.py`
   抓取并转换为 Obsidian 双链的脚本。
 - `.cache/fetch_evergreen_notes/`
-  抓取过程中的原始缓存，不提交到 Git。
+  抓取过程中的原始缓存和状态文件，不提交到 Git。
 
 ## 用法
 

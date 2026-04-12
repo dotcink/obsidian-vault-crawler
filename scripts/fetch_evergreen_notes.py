@@ -21,7 +21,7 @@ DEFAULT_OUTPUT_ROOT = REPO_ROOT / "evergreen_notes"
 CACHE_BASE = REPO_ROOT / ".cache" / "fetch_evergreen_notes"
 OUTPUT_ROOT = DEFAULT_OUTPUT_ROOT
 RAW_ROOT = CACHE_BASE / "default" / "raw"
-STATE_PATH = DEFAULT_OUTPUT_ROOT / "crawl-state.json"
+STATE_PATH = CACHE_BASE / "default" / "crawl-state.json"
 
 SITE_LINK_RE = re.compile(r"\[([^\]]+)\]\((https://notes\.andymatuschak\.org/[^)]+)\)")
 FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n?", re.DOTALL)
@@ -149,7 +149,7 @@ def resolve_paths(output_dir: str) -> tuple[Path, Path, Path]:
     cache_key = re.sub(r"[^A-Za-z0-9._-]+", "_", str(output_root.relative_to(REPO_ROOT) if output_root.is_relative_to(REPO_ROOT) else output_root))
     cache_root = CACHE_BASE / cache_key
     raw_root = cache_root / "raw"
-    state_path = output_root / "crawl-state.json"
+    state_path = cache_root / "crawl-state.json"
     return output_root, raw_root, state_path
 
 
