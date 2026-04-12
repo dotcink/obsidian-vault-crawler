@@ -17,7 +17,7 @@ READER = Path(
     "/Users/dotcink/.agents/skills/baoyu-url-to-markdown/scripts/vendor/baoyu-fetch/src/cli.ts"
 )
 ROOT_URL = "https://notes.andymatuschak.org/Evergreen_notes"
-OUTPUT_ROOT = REPO_ROOT / "url-to-markdown" / "notes.andymatuschak.org"
+OUTPUT_ROOT = REPO_ROOT / "evergreen_notes"
 RAW_ROOT = OUTPUT_ROOT / ".raw"
 STATE_PATH = OUTPUT_ROOT / "crawl-state.json"
 

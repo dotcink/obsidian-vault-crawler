@@ -9,3 +9,4 @@ __pycache__/
 
 # Imported raw crawl cache
 url-to-markdown/**/.raw/
+evergreen_notes/.raw/
