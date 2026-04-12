@@ -2,6 +2,10 @@
 
 本仓库保存从 Andy Matuschak 笔记站抓取并转换后的 Obsidian 笔记。
 
+入口：
+
+- [Evergreen notes](./evergreen_notes/Evergreen%20notes.md)
+
 ## 目录
 
 - `evergreen_notes/`
