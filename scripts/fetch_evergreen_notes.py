@@ -8,6 +8,7 @@ import json
 import re
 import shutil
 import subprocess
+from collections import deque
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -16,10 +17,11 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 READER = Path(
     "/Users/dotcink/.agents/skills/baoyu-url-to-markdown/scripts/vendor/baoyu-fetch/src/cli.ts"
 )
-ROOT_URL = "https://notes.andymatuschak.org/Evergreen_notes"
-OUTPUT_ROOT = REPO_ROOT / "evergreen_notes"
-RAW_ROOT = OUTPUT_ROOT / ".raw"
-STATE_PATH = OUTPUT_ROOT / "crawl-state.json"
+DEFAULT_OUTPUT_ROOT = REPO_ROOT / "evergreen_notes"
+CACHE_BASE = REPO_ROOT / ".cache" / "fetch_evergreen_notes"
+OUTPUT_ROOT = DEFAULT_OUTPUT_ROOT
+RAW_ROOT = CACHE_BASE / "default" / "raw"
+STATE_PATH = DEFAULT_OUTPUT_ROOT / "crawl-state.json"
 
 SITE_LINK_RE = re.compile(r"\[([^\]]+)\]\((https://notes\.andymatuschak\.org/[^)]+)\)")
 FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n?", re.DOTALL)
@@ -43,8 +45,7 @@ def safe_name(name: str) -> str:
     return cleaned or "Untitled"
 
 
-def parse_markdown(path: Path) -> tuple[dict[str, str], str]:
-    text = path.read_text(encoding="utf-8")
+def parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
     metadata: dict[str, str] = {}
     match = FRONTMATTER_RE.match(text)
     if match:
@@ -59,17 +60,15 @@ def parse_markdown(path: Path) -> tuple[dict[str, str], str]:
     return metadata, body
 
 
+def parse_markdown(path: Path) -> tuple[dict[str, str], str]:
+    text = path.read_text(encoding="utf-8")
+    metadata, body = parse_frontmatter(text)
+    return metadata, body
+
+
 def parse_frontmatter_file(path: Path) -> dict[str, str]:
     text = path.read_text(encoding="utf-8")
-    metadata: dict[str, str] = {}
-    match = FRONTMATTER_RE.match(text)
-    if not match:
-        return metadata
-    for line in match.group(1).splitlines():
-        if ":" not in line:
-            continue
-        key, value = line.split(":", 1)
-        metadata[key.strip()] = value.strip().strip('"')
+    metadata, _ = parse_frontmatter(text)
     return metadata
 
 
@@ -142,6 +141,18 @@ def log(message: str) -> None:
     print(message, flush=True)
 
 
+def resolve_paths(output_dir: str) -> tuple[Path, Path, Path]:
+    output_root = Path(output_dir).expanduser()
+    if not output_root.is_absolute():
+        output_root = (REPO_ROOT / output_root).resolve()
+
+    cache_key = re.sub(r"[^A-Za-z0-9._-]+", "_", str(output_root.relative_to(REPO_ROOT) if output_root.is_relative_to(REPO_ROOT) else output_root))
+    cache_root = CACHE_BASE / cache_key
+    raw_root = cache_root / "raw"
+    state_path = output_root / "crawl-state.json"
+    return output_root, raw_root, state_path
+
+
 def make_initial_state(root_url: str, depth: int | None) -> dict:
     return {
         "root_url": root_url,
@@ -158,8 +169,8 @@ def make_initial_state(root_url: str, depth: int | None) -> dict:
     }
 
 
-def load_state(resume: bool, root_url: str, depth: int | None) -> dict:
-    if (resume or STATE_PATH.exists()) and STATE_PATH.exists():
+def load_state(root_url: str, depth: int | None) -> dict:
+    if STATE_PATH.exists():
         return json.loads(STATE_PATH.read_text(encoding="utf-8"))
     return make_initial_state(root_url, depth)
 
@@ -241,107 +252,19 @@ def write_note_from_raw(url: str, raw_path: Path, state: dict) -> Path:
     return final_path
 
 
-def rebuild_pending_from_raw(state: dict) -> list[dict[str, int | str]]:
-    root_url = state.get("root_url", ROOT_URL)
-    max_depth = state.get("depth")
-    raw_bodies: dict[str, str] = {}
-    for raw_path in RAW_ROOT.glob("*.md"):
-        metadata, body = parse_markdown(raw_path)
-        url = metadata.get("url") or metadata.get("requestedUrl") or metadata.get("source")
-        if url:
-            raw_bodies[url] = body
-
-    if root_url not in raw_bodies and root_url not in set(state.get("fetched_urls", [])):
-        return []
-
-    seen_bfs: set[str] = set()
-    missing: list[dict[str, int | str]] = []
-    queue: list[tuple[str, int]] = [(root_url, 0)]
-
-    while queue:
-        url, depth = queue.pop(0)
-        if url in seen_bfs:
-            continue
-        seen_bfs.add(url)
-
-        if url not in raw_bodies:
-            if url not in set(state.get("fetched_urls", [])):
-                missing.append({"url": url, "depth": depth})
-            continue
-
-        if not should_expand(depth, max_depth):
-            continue
-
-        for _, linked_url in extract_site_links(raw_bodies[url]):
-            if linked_url not in seen_bfs:
-                queue.append((linked_url, depth + 1))
-
-    dedup: list[dict[str, int | str]] = []
-    added: set[str] = set()
-    fetched = set(state.get("fetched_urls", []))
-    for item in missing:
-        url = str(item["url"])
-        if url in fetched or url in added:
-            continue
-        added.add(url)
-        dedup.append(item)
-    return dedup
-
-
-def rebuild_pending_from_state_graph(state: dict) -> list[dict[str, int | str]]:
-    root_url = state.get("root_url", ROOT_URL)
-    max_depth = state.get("depth")
-    out_links: dict[str, list[str]] = state.get("out_links", {})
-    fetched = set(state.get("fetched_urls", []))
-
-    if root_url not in fetched and root_url not in out_links:
-        return []
-
-    seen_bfs: set[str] = set()
-    missing: list[dict[str, int | str]] = []
-    queue: list[tuple[str, int]] = [(root_url, 0)]
-
-    while queue:
-        url, depth = queue.pop(0)
-        if url in seen_bfs:
-            continue
-        seen_bfs.add(url)
-
-        if url not in fetched:
-            missing.append({"url": url, "depth": depth})
-            continue
-
-        if not should_expand(depth, max_depth):
-            continue
-
-        for linked_url in out_links.get(url, []):
-            if linked_url not in seen_bfs:
-                queue.append((linked_url, depth + 1))
-
-    dedup: list[dict[str, int | str]] = []
-    added: set[str] = set()
-    for item in missing:
-        url = str(item["url"])
-        if url in fetched or url in added:
-            continue
-        added.add(url)
-        dedup.append(item)
-    return dedup
-
-
 def seed_pending(root_url: str) -> list[dict[str, int | str]]:
     return [{"url": root_url, "depth": 0}]
 
 
 def crawl(state: dict) -> None:
     fetched_urls: set[str] = set(state.get("fetched_urls", []))
-    pending: list[dict[str, int | str]] = state.get("pending", [])
+    pending: deque[dict[str, int | str]] = deque(state.get("pending", []))
     processed_count = len(fetched_urls)
     run_seen: set[str] = set()
     run_queued: set[str] = {str(item["url"]) for item in pending}
 
     while pending:
-        item = pending.pop(0)
+        item = pending.popleft()
         url = str(item["url"])
         current_depth = int(item["depth"])
         run_queued.discard(url)
@@ -349,7 +272,7 @@ def crawl(state: dict) -> None:
             continue
         run_seen.add(url)
 
-        state["pending"] = pending
+        state["pending"] = list(pending)
         save_state(state)
 
         already_done = url in fetched_urls and url in state.get("written_files", {})
@@ -370,7 +293,7 @@ def crawl(state: dict) -> None:
                 raw_path = fetch_url(url)
             except Exception as exc:
                 state.setdefault("errors", {})[url] = str(exc)
-                state["pending"] = [{"url": url, "depth": current_depth}] + pending
+                state["pending"] = [{"url": url, "depth": current_depth}] + list(pending)
                 save_state(state)
                 log(f"[error] depth={current_depth} url={url} message={str(exc)}")
                 raise
@@ -401,7 +324,7 @@ def crawl(state: dict) -> None:
             added += 1
 
         state["seen_urls"] = sorted(set(state.get("seen_urls", [])) | run_seen | run_queued)
-        state["pending"] = pending
+        state["pending"] = list(pending)
         save_state(state)
         log(
             f"[expand] added={added} queued={len(pending)} seen={len(run_seen) + len(run_queued)} from={slug_from_url(url)}"
@@ -416,7 +339,7 @@ def write_manifest(state: dict) -> None:
         "# Andy Matuschak Evergreen Notes",
         "",
         f"抓取时间: {utc_now()}",
-        f"根页面: {state.get('root_url', ROOT_URL)}",
+        f"根页面: {state.get('root_url', '')}",
         f"抓取层级: {depth_text}",
         f"页面数量: {len(state.get('written_files', {}))}",
         f"待抓数量: {len(state.get('pending', []))}",
@@ -454,7 +377,12 @@ def parse_args() -> argparse.Namespace:
         default="1",
         help='Recursion depth, default: 1. Use "all" for the whole reachable site graph.',
     )
-    parser.add_argument("--resume", action="store_true", help="Resume from crawl-state.json")
+    parser.add_argument(
+        "-o",
+        "--output-dir",
+        default=str(DEFAULT_OUTPUT_ROOT.relative_to(REPO_ROOT)),
+        help="Directory for exported Obsidian notes and crawl-state.json.",
+    )
     parser.add_argument(
         "--keep-raw",
         action="store_true",
@@ -467,10 +395,13 @@ def main() -> None:
     args = parse_args()
     depth = parse_depth(args.depth)
     root_url = args.url
+    global OUTPUT_ROOT, RAW_ROOT, STATE_PATH
+    OUTPUT_ROOT, RAW_ROOT, STATE_PATH = resolve_paths(args.output_dir)
     OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
+    RAW_ROOT.parent.mkdir(parents=True, exist_ok=True)
     RAW_ROOT.mkdir(parents=True, exist_ok=True)
 
-    state = load_state(args.resume, root_url, depth)
+    state = load_state(root_url, depth)
     if state.get("root_url") != root_url:
         state = make_initial_state(root_url, depth)
     state["root_url"] = root_url
