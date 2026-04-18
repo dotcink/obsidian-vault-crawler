@@ -5,9 +5,11 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import os
 import re
 import shutil
 import subprocess
+import sys
 from collections import deque
 from pathlib import Path
 from urllib.parse import urlparse
@@ -90,6 +92,7 @@ def fetch_url(url: str) -> Path:
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
+        env={**os.environ, "OPENCLI_HEADLESS": "0"},
     )
     if result.returncode != 0:
         stderr = (result.stderr or "").strip()
@@ -352,6 +355,52 @@ def write_manifest(state: dict) -> None:
     manifest.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def default_compiled_output_path(output_root: Path) -> Path:
+    return output_root.parent / f"{output_root.name}_compiled.md"
+
+
+def resolve_compiled_output(path_value: str | None, output_root: Path) -> Path | None:
+    if path_value is None:
+        return None
+    if path_value == "auto":
+        return default_compiled_output_path(output_root)
+
+    compiled_path = Path(path_value).expanduser()
+    if not compiled_path.is_absolute():
+        compiled_path = (REPO_ROOT / compiled_path).resolve()
+    return compiled_path
+
+
+def write_compiled_markdown(state: dict, compiled_output: Path) -> None:
+    compiled_output.parent.mkdir(parents=True, exist_ok=True)
+
+    depth_value = state.get("depth")
+    depth_text = "all" if depth_value is None else str(depth_value)
+    lines = [
+        "# Andy Matuschak Evergreen Notes",
+        "",
+        f"- Generated: {utc_now()}",
+        f"- Root URL: {state.get('root_url', '')}",
+        f"- Depth: {depth_text}",
+        f"- Notes: {len(state.get('written_files', {}))}",
+        "",
+    ]
+
+    note_paths: list[Path] = []
+    for path_str in sorted(state.get("written_files", {}).values()):
+        note_path = (REPO_ROOT / path_str).resolve()
+        if note_path.exists():
+            note_paths.append(note_path)
+
+    for index, note_path in enumerate(note_paths):
+        _, body = parse_markdown(note_path)
+        lines.append(body.rstrip())
+        if index != len(note_paths) - 1:
+            lines.extend(["", "---", ""])
+
+    compiled_output.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+
+
 def cleanup_raw() -> None:
     if RAW_ROOT.exists():
         shutil.rmtree(RAW_ROOT)
@@ -364,39 +413,92 @@ def parse_depth(value: str) -> int | None:
     return max(depth, 0)
 
 
-def parse_args() -> argparse.Namespace:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Fetch Andy Matuschak notes into local Markdown with Obsidian wikilinks."
     )
-    parser.add_argument(
+    subparsers = parser.add_subparsers(dest="command")
+
+    fetch_parser = subparsers.add_parser(
+        "fetch",
+        help="Fetch notes from the site and write individual Markdown files.",
+    )
+    fetch_parser.add_argument(
         "url",
         help="Root URL to crawl. This page is treated as depth 0.",
     )
-    parser.add_argument(
+    fetch_parser.add_argument(
         "--depth",
         default="1",
         help='Recursion depth, default: 1. Use "all" for the whole reachable site graph.',
     )
-    parser.add_argument(
+    fetch_parser.add_argument(
         "-o",
         "--output-dir",
         default=str(DEFAULT_OUTPUT_ROOT.relative_to(REPO_ROOT)),
         help="Directory for exported Obsidian notes and crawl-state.json.",
     )
-    parser.add_argument(
+    fetch_parser.add_argument(
         "--keep-raw",
         action="store_true",
         help="Keep temporary raw markdown files for resume or inspection",
     )
-    return parser.parse_args()
+
+    compile_parser = subparsers.add_parser(
+        "compile",
+        help="Merge existing exported notes into a single Markdown file.",
+    )
+    compile_parser.add_argument(
+        "-o",
+        "--output-dir",
+        default=str(DEFAULT_OUTPUT_ROOT.relative_to(REPO_ROOT)),
+        help="Directory containing exported Obsidian notes.",
+    )
+    compile_parser.add_argument(
+        "--compiled-output",
+        default="auto",
+        help=(
+            'Output path for merged Markdown. Default: auto, which writes to "<output-dir>_compiled.md".'
+        ),
+    )
+
+    return parser
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = build_parser()
+    args_list = list(sys.argv[1:] if argv is None else argv)
+    if args_list and args_list[0] not in {"fetch", "compile", "-h", "--help"}:
+        args_list = ["fetch", *args_list]
+    return parser.parse_args(args_list)
+
+
+def load_compile_state(output_root: Path) -> dict:
+    state: dict = {}
+    if STATE_PATH.exists():
+        state = json.loads(STATE_PATH.read_text(encoding="utf-8"))
+    state["depth"] = state.get("depth")
+    state["root_url"] = state.get("root_url", "")
+    return sync_state_with_disk(state)
 
 
 def main() -> None:
     args = parse_args()
-    depth = parse_depth(args.depth)
-    root_url = args.url
     global OUTPUT_ROOT, RAW_ROOT, STATE_PATH
     OUTPUT_ROOT, RAW_ROOT, STATE_PATH = resolve_paths(args.output_dir)
+    if args.command == "compile":
+        compiled_output = resolve_compiled_output(args.compiled_output, OUTPUT_ROOT)
+        if compiled_output is None:
+            raise ValueError("compile mode requires a compiled output path")
+        state = load_compile_state(OUTPUT_ROOT)
+        write_compiled_markdown(state, compiled_output)
+        log(
+            f"[compiled] notes={len(state.get('written_files', {}))} file={compiled_output.relative_to(REPO_ROOT)}"
+        )
+        return
+
+    depth = parse_depth(args.depth)
+    root_url = args.url
     OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
     RAW_ROOT.parent.mkdir(parents=True, exist_ok=True)
     RAW_ROOT.mkdir(parents=True, exist_ok=True)

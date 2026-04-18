@@ -1,0 +1,108 @@
+# Andy Matuschak Evergreen Notes
+
+抓取时间: 2026-04-18T10:34:42Z
+根页面: https://notes.andymatuschak.org/Evergreen_notes
+抓取层级: 0
+页面数量: 98
+待抓数量: 0
+
+已抓取页面:
+
+- evergreen_notes/A reading inbox to capture possibly-useful references.md
+- evergreen_notes/A writing inbox for transient and incomplete notes.md
+- evergreen_notes/Advantages and disadvantages of using notes to form associations in content.md
+- evergreen_notes/Audiobooks.md
+- evergreen_notes/Authored environments are significantly colored by authors’ motivations.md
+- evergreen_notes/Backlinks can be used to implicitly define nodes in knowledge management systems.md
+- evergreen_notes/Beware automatic import into the reading inbox.md
+- evergreen_notes/Brainstorming may often substitute for missing insight accretion systems.md
+- evergreen_notes/Bridge notes narrowly relate two adjacent terms.md
+- evergreen_notes/Close open loops.md
+- evergreen_notes/Collecting material feels more useful than it usually is.md
+- evergreen_notes/Commonplace books.md
+- evergreen_notes/Contextual backlinks.md
+- evergreen_notes/Conversations incorporating multiple discussants’ evergreen notes may promote collaborative sense-making.md
+- evergreen_notes/Create speculative outlines while you write.md
+- evergreen_notes/Daily working log.md
+- evergreen_notes/Deep focus comes more easily for me when developing ideas in a paper notebook, rather than with a computer.md
+- evergreen_notes/Digital annotation is too formal.md
+- evergreen_notes/Digital note-writing systems fixate on the presentation and manipulation of individual notes, mostly ignoring inter-note sense-making.md
+- evergreen_notes/Do your own thinking.md
+- evergreen_notes/E-reading popularity sharply trails all book-reading.md
+- evergreen_notes/Elaborative encoding.md
+- evergreen_notes/Evergreen note maintenance approximates spaced repetition.md
+- evergreen_notes/Evergreen note titles are like APIs.md
+- evergreen_notes/Evergreen note-writing as fundamental unit of knowledge work.md
+- evergreen_notes/Evergreen note-writing helps insight accumulate.md
+- evergreen_notes/Evergreen note-writing helps reading efforts accumulate.md
+- evergreen_notes/Evergreen notes are a safe place to develop wild ideas.md
+- evergreen_notes/Evergreen notes can increase conversational bandwidth.md
+- evergreen_notes/Evergreen notes lower the emotional stakes in editing manuscripts.md
+- evergreen_notes/Evergreen notes permit smooth incremental progress in writing (“incremental writing”).md
+- evergreen_notes/Evergreen notes should be atomic.md
+- evergreen_notes/Evergreen notes should be concept-oriented.md
+- evergreen_notes/Evergreen notes should be densely linked.md
+- evergreen_notes/Evergreen notes.md
+- evergreen_notes/Executable strategy for writing.md
+- evergreen_notes/Executable strategy.md
+- evergreen_notes/How to collect observations while reading.md
+- evergreen_notes/How to process reading annotations into evergreen notes.md
+- evergreen_notes/Human channel capacity increases with stimulus dimensionality.md
+- evergreen_notes/Inboxes only work if you trust how they’re drained.md
+- evergreen_notes/Inboxes shouldn’t be split into multiple places.md
+- evergreen_notes/Incremental reading.md
+- evergreen_notes/It’s hard to navigate to unlinked “neighbors” in associative note systems.md
+- evergreen_notes/Jerome Bruner and enaction.md
+- evergreen_notes/Knowledge work should accrete.md
+- evergreen_notes/Knowledge work.md
+- evergreen_notes/Leaps of insight emerge from prior thought.md
+- evergreen_notes/Let ideas and beliefs emerge organically.md
+- evergreen_notes/Literature notes are secondary and separate.md
+- evergreen_notes/Maintaining multiple reading positions is difficult when reading digitally.md
+- evergreen_notes/Mass mediums mostly lack an authored time dimension beyond a day.md
+- evergreen_notes/Methods for bringing dynamic mediums to physical reading contexts.md
+- evergreen_notes/Miller - The magical number seven, plus or minus two.md
+- evergreen_notes/Most people read ineffectively.md
+- evergreen_notes/Most people take only transient notes.md
+- evergreen_notes/Most people use notes as a bucket for storage or scratch thoughts.md
+- evergreen_notes/My morning writing practice.md
+- evergreen_notes/Note-writing can be a virtuosic skill.md
+- evergreen_notes/Note-writing practices are generally ineffective.md
+- evergreen_notes/Note-writing practices provide weak feedback.md
+- evergreen_notes/Note-writing system.md
+- evergreen_notes/Notes should surprise you.md
+- evergreen_notes/Participatory environment.md
+- evergreen_notes/Participatory environments support learning.md
+- evergreen_notes/People who write extensively about note-writing rarely have a serious context of use.md
+- evergreen_notes/Pocket memo pad to capture into writing inbox while out.md
+- evergreen_notes/Prefer associative ontologies to hierarchical taxonomies.md
+- evergreen_notes/Prefer fine-grained associations.md
+- evergreen_notes/Prefer note titles with complete phrases to sharpen claims.md
+- evergreen_notes/Prefer positive note titles to promote systematic theory.md
+- evergreen_notes/Reading texts on computers is unpleasant.md
+- evergreen_notes/Release valves for non-linear thought may support improved linear output.md
+- evergreen_notes/Similarities and differences between evergreen note-writing and Zettelkasten.md
+- evergreen_notes/Sosa, R. (2019). Accretion theory of ideation Evaluation regimes for ideation stages. Design Science, 5, e23.md
+- evergreen_notes/Spaced repetition can lower the stakes around destructive inbox-maintenance operations.md
+- evergreen_notes/Spaced repetition may be a helpful tool to incrementally develop inklings.md
+- evergreen_notes/Spaced repetition memory system.md
+- evergreen_notes/Spacing effect.md
+- evergreen_notes/Span of absolute judgment.md
+- evergreen_notes/Tags are an ineffective association structure.md
+- evergreen_notes/Taxonomy of note types.md
+- evergreen_notes/The best way to read is highly contextual.md
+- evergreen_notes/The joy of being the cause.md
+- evergreen_notes/The mnemonic medium can be extended to one’s personal notes.md
+- evergreen_notes/The most effective readers and thinkers I know don’t take notes when reading.md
+- evergreen_notes/To what extent can application prompts supplant recall prompts in the mnemonic medium.md
+- evergreen_notes/To what extent is exceptional ability heritable.md
+- evergreen_notes/Triage strategies for maintaining inboxes (e.g. Inbox Zero) are often too brittle.md
+- evergreen_notes/Understanding requires effortful engagement.md
+- evergreen_notes/Use phones to collect and triage, not (usually) to read.md
+- evergreen_notes/Write about what you read to internalize texts deeply.md
+- evergreen_notes/Write notes for yourself by default, disregarding audience.md
+- evergreen_notes/Writing forces sharper understanding.md
+- evergreen_notes/Zettelkasten.md
+- evergreen_notes/[unavailable note].md
+- evergreen_notes/§Note-writing systems.md
+- evergreen_notes/“Better note-taking” misses the point; what matters is “better thinking”.md
